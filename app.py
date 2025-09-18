@@ -8,9 +8,10 @@ import traceback
 
 app = Flask(__name__)
 
-# ImgBB API Key (Vercel এ সেট করতে হবে)
+# ImgBB API Key (Vercel এ Environment Variable এ সেট করতে হবে)
 IMAGEBB_API_KEY = os.environ.get("IMAGEBB_API_KEY", None)
 
+# Global Error Handler
 @app.errorhandler(Exception)
 def handle_error(e):
     return jsonify({
@@ -20,7 +21,7 @@ def handle_error(e):
 
 @app.route("/api/bkash", methods=["GET"])
 def generate_bkash():
-    # Params
+    # Query Params
     number = request.args.get("number", "01811111111")
     transactionId = request.args.get("transaction", "730MGQG6GH")
     amount = int(request.args.get("amount", 10000))
@@ -31,13 +32,13 @@ def generate_bkash():
     time_str = now.strftime("%I:%M %p")
     dayMonthYear = now.strftime("%d/%m/%y")
 
-    # File paths
+    # File paths (same folder এ রাখতে হবে)
     base_dir = os.path.dirname(__file__)
     bg_path = os.path.join(base_dir, "zeron.jpg")
     font1_path = os.path.join(base_dir, "roboto.ttf")
     font2_path = os.path.join(base_dir, "roboto2.ttf")
 
-    # Load background
+    # Load Background
     background = Image.open(bg_path).convert("RGBA")
     draw = ImageDraw.Draw(background)
 
@@ -52,7 +53,9 @@ def generate_bkash():
     draw.text((400, 850), number, fill=color, font=font1)
     draw.text((400, 950), number, fill=color, font=font2)
 
-    text_w, _ = draw.textsize(transactionId, font=font2)
+    # Transaction ID width বের করা (new method)
+    bbox = draw.textbbox((0, 0), transactionId, font=font2)
+    text_w = bbox[2] - bbox[0]
     image_w = background.size[0]
     draw.text((image_w - 384 - text_w, 1430), transactionId, fill=color, font=font2)
 
@@ -63,11 +66,12 @@ def generate_bkash():
     draw.text((439, 1420), dayMonthYear, fill=color, font=font1)
     draw.text((50, 109), time_str, fill=color, font=font_small)
 
-    # Save buffer
+    # Save to buffer
     img_bytes = io.BytesIO()
     background.save(img_bytes, format="PNG")
     img_bytes.seek(0)
 
+    # Check API Key
     if not IMAGEBB_API_KEY:
         return jsonify({"error": "IMAGEBB_API_KEY not set in environment"}), 500
 
@@ -99,3 +103,8 @@ def generate_bkash():
 @app.route("/")
 def home():
     return jsonify({"message": "BKash API Running ✅", "by": "@DevZeron"})
+
+
+# Vercel handler
+def handler(event, context):
+    return app(event, context)
