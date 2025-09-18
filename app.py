@@ -25,7 +25,7 @@ def generate_bkash():
     dayMonthYear = now.strftime("%d/%m/%y")
 
     # Background image (ss.jpg আপনার repo তে থাকতে হবে)
-    background = Image.open("ss.jpg").convert("RGBA")
+    background = Image.open("zeron.jpg").convert("RGBA")
     draw = ImageDraw.Draw(background)
 
     # Fonts (repo তে roboto.ttf, roboto2.ttf রাখতে হবে)
